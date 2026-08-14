@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Analisa Teknikal AUD/USD - VWAP, 3 EMA & MACD Pro</title>
+  <title>Analisa Teknikal AUD/USD - Multi Timeframe</title>
   <style>
     :root {
       --bg-color: #0b0c10;
@@ -141,7 +141,7 @@
     <header>
       <h1>AUD/USD Technical Suite (VWAP + 3 EMA + MACD PRO)</h1>
       <div class="status-bar">
-        <div>Asset: <span id="current-asset" style="color: #fff;">AUD/USD</span> (<span id="current-tf">H1</span>)</div>
+        <div>Asset: <span id="current-asset" style="color: #fff;">AUD/USD</span> (<span id="current-tf">M5</span>)</div>
         <div>Sumber Data: <span id="data-status" class="status-badge status-live">Menghubungkan...</span></div>
       </div>
     </header>
@@ -157,26 +157,30 @@
 
     <div class="button-container">
       <button class="btn-mql active" style="cursor: default;">AUD/USD (FOCUS)</button>
-      <button id="btn-tf" class="btn-mql" onclick="toggleTimeframe()">TIMEFRAME: H1</button>
+      <button id="btn-tf" class="btn-mql" onclick="toggleTimeframe()">TIMEFRAME: M5</button>
       <button id="btn-refresh" class="btn-mql" onclick="fetchData()">REFRESH API</button>
     </div>
   </div>
 
   <script>
     const apiKey = '68c36795a75a4b9c99e8ea500b7e5937';
-    const currentSymbol = 'AUD/USD'; // Pair difokuskan hanya AUD/USD
-    let currentInterval = '1h';
-    let rawCandles = [];
+    const currentSymbol = 'AUD/USD';
     
-    // Timeframe rotasi
+    // Timeframe lengkap dari M1 sampai D1
     const timeframes = [
-      { display: 'H1', value: '1h' },
-      { display: 'H4', value: '4h' },
-      { display: 'D1', value: '1day' },
-      { display: 'M15', value: '15min' },
-      { display: 'M30', value: '30min' }
+      { display: 'M1',  value: '1min',  stepMinutes: 1 },
+      { display: 'M5',  value: '5min',  stepMinutes: 5 },
+      { display: 'M15', value: '15min', stepMinutes: 15 },
+      { display: 'M30', value: '30min', stepMinutes: 30 },
+      { display: 'H1',  value: '1h',    stepMinutes: 60 },
+      { display: 'H4',  value: '4h',    stepMinutes: 240 },
+      { display: 'D1',  value: '1day',  stepMinutes: 1440 }
     ];
-    let currentTfIndex = 0;
+    
+    // Default dimulai dari M5
+    let currentTfIndex = 1; 
+    let currentInterval = timeframes[currentTfIndex].value;
+    let rawCandles = [];
 
     // Parameter Teknis MQL
     const InpEMA1 = 9;
@@ -226,7 +230,7 @@
           throw new Error(json.message || 'Pembatasan API');
         }
       } catch (err) {
-        console.warn('API error, menggunakan simulasi demo AUD/USD:', err.message);
+        console.warn('API error, beralih ke simulasi AUD/USD:', err.message);
         statusElement.innerText = 'DEMO DATA (Limit API)';
         statusElement.classList.add('status-demo');
         rawCandles = generateDemoData();
@@ -234,25 +238,28 @@
       }
     }
 
-    // Generator simulasi harga spesifik range AUD/USD (~0.65500)
+    // Generator data simulasi presisi disesuaikan per timeframe
     function generateDemoData() {
       const data = [];
       let price = 0.65500;
       let date = new Date();
+      const step = timeframes[currentTfIndex].stepMinutes;
+      const volatility = Math.sqrt(step / 60) * 0.0006;
+
       for (let i = 0; i < 250; i++) {
-        const change = (Math.random() - 0.495) * 0.0010; 
+        const change = (Math.random() - 0.495) * volatility; 
         const open = price;
         const close = price + change;
-        const high = Math.max(open, close) + Math.random() * 0.0004;
-        const low = Math.min(open, close) - Math.random() * 0.0004;
-        const volume = Math.floor(Math.random() * 400) + 100;
+        const high = Math.max(open, close) + Math.random() * (volatility * 0.5);
+        const low = Math.min(open, close) - Math.random() * (volatility * 0.5);
+        const volume = Math.floor(Math.random() * 300) + 50;
         
         data.push({
           time: date.toISOString().replace('T', ' ').substring(0, 19),
           open, high, low, close, volume
         });
         price = close;
-        date.setHours(date.getHours() - 1);
+        date.setMinutes(date.getMinutes() - step);
       }
       return data.reverse();
     }
@@ -295,7 +302,6 @@
         const curDate = candles[i].time.substring(0, 10);
         let dayStartBar = i;
 
-        // Cari awal hari
         for (let j = i; j >= 0; j--) {
           if (candles[j].time.substring(0, 10) === curDate) {
             dayStartBar = j;
@@ -367,7 +373,7 @@
       // 3. MACD Pro
       const macd = calculateMACDPro(closes);
 
-      // Evaluasi Tren Signal
+      // Evaluasi Sinyal Tren
       const lastIdx = closes.length - 1;
       const e9 = ema9[lastIdx];
       const e12 = ema12[lastIdx];
@@ -432,7 +438,7 @@
       const candleWidth = plotWidth / visibleCount;
       const getX = (i) => paddingLeft + (i - startIndex) * candleWidth + candleWidth / 2;
 
-      // 1. Grid Vertikal
+      // 1. Grid Vertikal & Label Waktu
       ctx.strokeStyle = '#1a1a1a';
       ctx.lineWidth = 1;
       ctx.setLineDash([3, 3]);
@@ -450,6 +456,7 @@
           ctx.font = '10px monospace';
           ctx.textAlign = 'center';
           const t = candles[i].time;
+          // Format jam & menit untuk timeframe intraday M1, M5, M15
           const timeStr = t.includes(' ') ? t.split(' ')[1].substring(0, 5) : t.substring(5, 10);
           ctx.fillText(timeStr, x, height - 5);
         }
@@ -474,7 +481,7 @@
         }
       }
 
-      const priceRange = maxPrice - minPrice || 0.001;
+      const priceRange = maxPrice - minPrice || 0.0005;
       minPrice -= priceRange * 0.03;
       maxPrice += priceRange * 0.03;
 
@@ -499,8 +506,8 @@
       }
       ctx.setLineDash([]);
 
-      // 3. Gambar Layer VWAP
-      // Upper Layers (DeepSkyBlue)
+      // 3. Layer VWAP
+      // Upper Layers
       ctx.strokeStyle = 'rgba(0, 191, 255, 0.45)';
       ctx.lineWidth = 1;
       for (let d = 0; d < 5; d++) {
@@ -516,7 +523,7 @@
         ctx.stroke();
       }
 
-      // Lower Layers (Pink)
+      // Lower Layers
       ctx.strokeStyle = 'rgba(255, 192, 203, 0.45)';
       for (let d = 0; d < 5; d++) {
         ctx.beginPath();
@@ -614,10 +621,11 @@
       ctx.stroke();
 
       // Label Chart Utama
+      const currentTFDisplay = timeframes[currentTfIndex].display;
       ctx.fillStyle = '#00ff00';
       ctx.font = 'bold 11px sans-serif';
       ctx.textAlign = 'left';
-      ctx.fillText('AUD/USD : VWAP 5-LAYERS + EMA (9, 12, 26, 200)', paddingLeft + 10, chartYTop + 15);
+      ctx.fillText(`AUD/USD [${currentTFDisplay}] : VWAP 5-LAYERS + EMA (9, 12, 26, 200)`, paddingLeft + 10, chartYTop + 15);
 
       // 6. SUBWINDOW : MACD PRO (Color_MACD_Visual)
       let minMacd = -0.0001;
@@ -633,7 +641,7 @@
 
       const zeroY = getSubY(0);
 
-      // Garis Nol
+      // Garis Nol Subwindow
       ctx.strokeStyle = '#555555';
       ctx.setLineDash([2, 2]);
       ctx.beginPath();
@@ -642,7 +650,7 @@
       ctx.stroke();
       ctx.setLineDash([]);
 
-      // Label Level Subwindow
+      // Label Subwindow Range
       ctx.fillStyle = '#888888';
       ctx.font = '10px monospace';
       ctx.textAlign = 'left';
@@ -650,7 +658,7 @@
       ctx.fillText(absMax.toFixed(5), width - paddingRight + 5, getSubY(absMax) + 3);
       ctx.fillText((-absMax).toFixed(5), width - paddingRight + 5, getSubY(-absMax) + 3);
 
-      // Gambar Histogram MACD Pro
+      // Histogram MACD Pro
       const barW = Math.max(2, candleWidth * 0.5);
       for (let i = startIndex; i < totalCandles; i++) {
         if (macd[i] === null) continue;
@@ -665,7 +673,7 @@
         ctx.fillRect(x - barW / 2, Math.min(zeroY, y), barW, Math.max(1, Math.abs(h)));
       }
 
-      // Gambar Garis MACD Pro Slope
+      // Garis MACD Pro Slope
       ctx.lineWidth = 2;
       for (let i = startIndex + 1; i < totalCandles; i++) {
         if (macd[i] === null || macd[i - 1] === null) continue;
@@ -678,13 +686,13 @@
         ctx.stroke();
       }
 
-      // Label Window
+      // Label Subwindow
       ctx.fillStyle = '#00ff00';
       ctx.font = 'bold 11px sans-serif';
       ctx.textAlign = 'left';
       ctx.fillText('WINDOW : MACD PRO (12, 26)', paddingLeft + 10, subYTop + 15);
 
-      // Garis Pembatas Chart & Subwindow
+      // Garis Pembatas
       ctx.strokeStyle = '#333333';
       ctx.lineWidth = 1;
       ctx.beginPath();
@@ -697,6 +705,7 @@
       if (rawCandles.length > 0) processAndDraw();
     });
 
+    // Mulai inisialisasi
     fetchData();
   </script>
 </body>
