@@ -1,25 +1,25 @@
 <!DOCTYPE html>
 <html lang="id"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Generator Kuis Short 9:16 - Audio Fix</title>
-<script src="https://cdn.jsdelivr.net/npm/mespeak@2.0.2/mespeak.js"></script>
+<title>Generator Kuis Short - GitHub Fix</title>
 <style>
 :root{--bg:#0f1220;--card:#1b1e2e;--tx:#eef;--bd:#2d3250;--ac:#6c4cff}
 body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.5 system-ui,sans-serif}
 .wrap{max-width:1000px;margin:0 auto;padding:16px;display:grid;gap:16px;grid-template-columns:1fr}@media(min-width:800px){.wrap{grid-template-columns:1fr 340px}}
 .card{background:var(--card);border:1px solid var(--bd);border-radius:16px;padding:16px}
-button{flex:1;padding:12px;border:0;border-radius:12px;background:var(--ac);color:#fff;font-weight:700;cursor:pointer}button.g{background:transparent;border:1px solid var(--bd)}
-.row{display:flex;gap:8px;margin-top:12px}canvas{width:100%;max-width:320px;aspect-ratio:9/16;display:block;margin:auto;border-radius:14px;background:#000}
-label{font-weight:600;margin:10px 0 4px;font-size:13px;display:block}textarea,input,select{width:100%;padding:10px;border-radius:10px;border:1px solid var(--bd);background:#12141f;color:#fff;font:inherit}
-#st{text-align:center;font-weight:700;margin-top:10px}
+button{flex:1;padding:12px;border:0;border-radius:12px;background:var(--ac);color:#fff;font-weight:700;cursor:pointer}button.g{background:transparent;border:1px solid var(--bd);color:var(--tx)}
+button:disabled{opacity:.5}.row{display:flex;gap:8px;margin-top:12px}
+canvas{width:100%;max-width:320px;aspect-ratio:9/16;display:block;margin:auto;border-radius:14px;background:#000}
+label{font-weight:600;margin:12px 0 4px;font-size:13px;display:block}textarea,input,select{width:100%;padding:10px;border-radius:10px;border:1px solid var(--bd);background:#12141f;color:#fff;font:inherit}
+#st{text-align:center;font-weight:700;margin-top:10px;color:#8bf}
 </style>
 </head><body>
 <div class="wrap">
 <div class="card">
-<h2 style="margin:0">Kuis Short - GitHub Pages Ready</h2>
-<p style="font-size:12px;color:#9ab">Online = Suara Indonesia aktif. Hasil rekaman .webm sudah ada suaranya.</p>
+<h2 style="margin:0 0 6px">Generator Kuis - FIX GITHUB</h2>
+<div style="font-size:12px;color:#9ab;margin-bottom:10px">Cara pakai di GitHub Pages: Klik Rekam + Suara > Pilih tab <b>grafer-ctrl.github.io/aud/</b> > Aktifkan <b>Share tab audio</b> (toggle biru) > Share</div>
 <label>Pertanyaan</label><textarea id="q" rows="2">Apa hukuman koruptor yang paling pantas?</textarea>
-<label>Pilihan</label><textarea id="o" rows="7">Dieliminasi dari bumi
+<label>Pilihan jawaban (1 baris 1 jawaban)</label><textarea id="o" rows="7">Dieliminasi dari bumi
 Jangan diakhiri hidupnya, cukup disakiti hidupnya dalam kotak 1x1 meter
 Rampas aset, dijadikan nasib seperti pemulung
 Perampasan aset, dikasih rumah di kolong jembatan
@@ -27,23 +27,79 @@ Tidak menjawab karena takut karma
 Lebih baik diam karena diam itu emas
 Salah semua, makanya saya tidak menjawab</textarea>
 <label>Akhir</label><textarea id="e" rows="2">Tulis pilihanmu di kertas, lalu upload di kolom komentar!</textarea>
-<label>Speed meSpeak: <span id="spdV">175</span></label><input id="spd" type="range" min="100" max="250" value="175">
+<label>Suara</label><select id="v"></select>
+<label>Durasi per slide (detik)</label><input id="d" type="number" min="1" max="8" value="3">
 <div class="row"><button id="play">▶ Preview</button><button id="rec">⏺ Rekam + Suara</button></div>
-<button id="stop" style="width:100%;margin-top:8px" class="g">■ Stop</button>
-<div id="st">Loading meSpeak ID...</div>
+<button id="stop" class="g" style="width:100%;margin-top:8px">■ Stop</button>
+<div id="st">Siap</div>
 </div>
 <div class="card"><canvas id="c" width="720" height="1280"></canvas></div>
 </div>
 <script>
 const $=id=>document.getElementById(id), cv=$('c'), x=cv.getContext('2d'), W=720,H=1280;
-let slides=[],cur=0,run=false,cancel=false, audioCtx, audioDest, mr, chunks=[];
-const pal=[[270,60],[330,65],[200,70],[20,75]];
-meSpeak.loadConfig("https://cdn.jsdelivr.net/npm/mespeak@2.0.2/src/mespeak_config.json");
-meSpeak.loadVoice("https://cdn.jsdelivr.net/npm/mespeak@2.0.2/voices/id.json",()=>{$("st").textContent="Siap! meSpeak ID aktif - bisa rekam"});
-$("spd").oninput=()=>$("spdV").textContent=$("spd").value;
-function build(){const ops=$('o').value.split('\n').map(s=>s.trim()).filter(Boolean);slides=[{k:'q',t:$('q').value,s:$('q').value}];ops.forEach((o,i)=>slides.push({k:'o',i,t:o,s:o}));slides.push({k:'e',t:$('e').value,s:$('e').value});}
-function draw(){const s=slides[cur];if(!s){requestAnimationFrame(draw);return}const p=pal[cur%pal.length];const g=x.createLinearGradient(0,0,W,H);g.addColorStop(0,`hsl(${p[0]},${p[1]}%,35%)`);g.addColorStop(1,`hsl(${(p[0]+50)%360},${p[1]}%,15%)`);x.fillStyle=g;x.fillRect(0,0,W,H);x.textAlign='center';x.fillStyle='#fff';if(s.k==='q'||s.k==='e'){x.font='700 56px system-ui';const words=s.t.split(' ');let lines=[],line='';words.forEach(w=>{if(x.measureText(line+' '+w).width>W-120&&line){lines.push(line);line=w}else line=line?line+' '+w:w});lines.push(line);lines.forEach((l,i)=>x.fillText(l,W/2,H/2-100+i*70))}else{slides.forEach(z=>{if(z.k!=='o'||z.i>s.i)return;const y=260+z.i*115;const on=z.i===s.i;x.fillStyle=on?'#fff':'rgba(255,255,255,.18)';x.beginPath();x.roundRect(40,y,W-80,100,18);x.fill();x.fillStyle=on?'#000':'#fff';x.textAlign='left';x.font='700 26px system-ui';x.fillText(String.fromCharCode(65+z.i)+'. '+z.t,60,y+60)})}requestAnimationFrame(draw);}
-function speak(text){return new Promise(async res=>{if(!audioCtx){audioCtx=new AudioContext();audioDest=audioCtx.createMediaStreamDestination();}const wav=meSpeak.speak(text,{variant:'f5',speed:+$("spd").value});const buf=await fetch(wav).then(r=>r.arrayBuffer());const dec=await audioCtx.decodeAudioData(buf);const src=audioCtx.createBufferSource();src.buffer=dec;src.connect(audioDest);src.connect(audioCtx.destination);src.onended=res;src.start();});}
-async function play(rec){if(run)return;build();run=true;cancel=false;chunks=[];if(!audioCtx){audioCtx=new AudioContext();audioDest=audioCtx.createMediaStreamDestination();}const cStream=cv.captureStream(30);const combined=new MediaStream([...cStream.getVideoTracks(),...audioDest.stream.getAudioTracks()]);if(rec){mr=new MediaRecorder(combined,{mimeType:'video/webm;codecs=vp8,opus'});mr.ondataavailable=e=>e.data.size&&chunks.push(e.data);mr.onstop=()=>{const b=new Blob(chunks,{type:'video/webm'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='kuis-ADA-SUARA.webm';a.click();$("st").textContent="Berhasil download! Cek, suaranya ada."};mr.start();$("st").textContent="● MEREKAM DENGAN SUARA"}for(let i=0;i<slides.length&&!cancel;i++){cur=i;await speak(slides[i].s);await new Promise(r=>setTimeout(r,2000));}if(mr&&mr.state!=='inactive')mr.stop();run=false;}
-$("play").onclick=()=>play(false);$("rec").onclick=()=>play(true);$("stop").onclick=()=>{cancel=true;};build();draw();
+let slides=[],cur=0,t0=0,run=false,cancel=false,voices=[];
+const pal=[[270,60],[330,65],[200,70],[20,75],[150,55]];
+
+function build(){
+  const q=$('q').value.trim();
+  const ops=$('o').value.split('\n').map(s=>s.trim().replace(/^[a-z][.)]\s+/i,'')).filter(Boolean);
+  slides=[{k:'q',t:q,s:q}];
+  ops.forEach((o,i)=>slides.push({k:'o',i,t:o,s:'Pilihan '+String.fromCharCode(65+i)+'. '+o}));
+  slides.push({k:'e',t:$('e').value.trim(),s:$('e').value.trim()});
+}
+function wrap(txt,mw,fs){x.font='700 '+fs+'px system-ui';const ws=txt.split(' ');let l='',o=[];ws.forEach(a=>{const tt=l?l+' '+a:a;if(x.measureText(tt).width>mw&&l){o.push(l);l=a}else l=tt});if(l)o.push(l);return o;}
+function draw(){
+  const s=slides[cur]; if(!s){requestAnimationFrame(draw);return}
+  const p=pal[cur%pal.length], a=Math.min(1,(performance.now()-t0)/350);
+  const g=x.createLinearGradient(0,0,W,H); g.addColorStop(0,`hsl(${p[0]},${p[1]}%,38%)`); g.addColorStop(1,`hsl(${(p[0]+50)%360},${p[1]}%,18%)`);
+  x.fillStyle=g; x.fillRect(0,0,W,H);
+  x.textAlign='center'; x.fillStyle='#fff'; x.globalAlpha=a;
+  if(s.k==='q'||s.k==='e'){
+    const fs=s.k==='q'?56:50, L=wrap(s.t,W-110,fs);
+    if(s.k==='q'){x.font='600 26px system-ui';x.globalAlpha=a*.8;x.fillText('KUIS SINGKAT',W/2,280);x.globalAlpha=a;}
+    x.font='700 '+fs+'px system-ui';
+    const y0=H/2-(L.length*fs*1.25)/2+fs;
+    L.forEach((l,i)=>x.fillText(l,W/2,y0+i*fs*1.25));
+  }else{
+    const q=slides[0].t; x.font='600 30px system-ui'; const qL=wrap(q,W-100,30);
+    x.globalAlpha=.85; qL.forEach((l,i)=>x.fillText(l,W/2,100+i*40)); x.globalAlpha=1;
+    const n=slides.filter(z=>z.k==='o').length, top=220, gap=Math.min(135,(H-top-80)/n);
+    slides.forEach(z=>{if(z.k!=='o'||z.i>s.i)return; const y=top+z.i*gap, on=z.i===s.i;
+      x.fillStyle=on?'#fff':'rgba(255,255,255,.18)'; x.beginPath(); x.roundRect(40,y,W-80,gap-14,18); x.fill();
+      x.textAlign='left'; x.fillStyle=on?`hsl(${p[0]},${p[1]}%,22%)`:'#fff';
+      x.font='800 34px system-ui'; x.fillText(String.fromCharCode(65+z.i),64,y+(gap-14)/2+12);
+      const fs=gap>110?28:24; x.font='600 '+fs+'px system-ui'; const L=wrap(z.t,W-190,fs);
+      const ly=y+(gap-14)/2-(L.length-1)*fs*.6+fs*.35; L.slice(0,2).forEach((l,k)=>x.fillText(l,115,ly+k*fs*1.2));
+    });
+  }
+  x.globalAlpha=1; requestAnimationFrame(draw);
+}
+function rr(a,b,w,h,r){x.beginPath();x.moveTo(a+r,b);x.arcTo(a+w,b,a+w,b+h,r);x.arcTo(a+w,b+h,a,b+h,r);x.arcTo(a,b+h,a,b,r);x.arcTo(a,b,a+w,b,r);x.closePath();}
+function speak(t){return new Promise(res=>{const u=new SpeechSynthesisUtterance(t);u.lang='id-ID';u.rate=1.0;const v=voices[$('v').value];if(v){u.voice=v;u.lang=v.lang}u.onend=u.onerror=()=>res();speechSynthesis.speak(u);});}
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+
+async function play(withRec){
+  if(run)return; build(); run=true; cancel=false; $('play').disabled=$('rec').disabled=true;
+  let mr, chunks=[], tabStream=null;
+  if(withRec){
+    try{
+      $('st').textContent='Silakan pilih tab ini + aktifkan Share tab audio...';
+      tabStream = await navigator.mediaDevices.getDisplayMedia({video:true, audio:{echoCancellation:false, noiseSuppression:false, suppressLocalAudioPlayback:false}});
+      if(tabStream.getAudioTracks().length===0){tabStream.getTracks().forEach(t=>t.stop()); throw new Error('Toggle Share tab audio belum diaktifkan!');}
+      const canvasStream = cv.captureStream(30);
+      const combined = new MediaStream([...canvasStream.getVideoTracks(), ...tabStream.getAudioTracks()]);
+      mr=new MediaRecorder(combined,{mimeType:'video/webm;codecs=vp8,opus'});
+      mr.ondataavailable=e=>e.data.size&&chunks.push(e.data);
+      mr.onstop=()=>{const b=new Blob(chunks,{type:'video/webm'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='kuis-ADA-SUARA.webm';a.click();tabStream.getTracks().forEach(t=>t.stop());};
+      mr.start(); $('st').textContent='● MEREKAM DENGAN SUARA TAB';
+    }catch(err){$('st').textContent='Batal/Gagal: '+err.message; $('play').disabled=$('rec').disabled=false; run=false; return;}
+  }
+  const min=Math.max(1,+$('d').value)*1000;
+  for(let i=0;i<slides.length&&!cancel;i++){cur=i; t0=performance.now(); $('st').textContent=(withRec?'● REC ':'')+'Slide '+(i+1)+'/'+slides.length; await Promise.all([speak(slides[i].s), sleep(min)]); await sleep(200);}
+  if(mr&&mr.state!=='inactive')mr.stop(); run=false; $('play').disabled=$('rec').disabled=false; $('st').textContent='Selesai!';
+}
+function loadVoices(){voices=speechSynthesis.getVoices();const sel=$('v');sel.innerHTML='';let idVoices=voices.filter(v=>v.lang.toLowerCase().includes('id'));let list=idVoices.length?idVoices:voices;list.forEach(v=>{const o=document.createElement('option');o.value=voices.indexOf(v);o.textContent=v.name+' ('+v.lang+')';sel.appendChild(o)});}
+if(speechSynthesis){speechSynthesis.onvoiceschanged=loadVoices} loadVoices();
+$('play').onclick=()=>play(false); $('rec').onclick=()=>play(true); $('stop').onclick=()=>{cancel=true; speechSynthesis.cancel();};
+build(); t0=performance.now(); draw();
 </script></body></html>
