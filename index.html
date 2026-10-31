@@ -1,25 +1,26 @@
 <!DOCTYPE html>
 <html lang="id"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Generator Kuis Short - GitHub Fix</title>
+<title>Kuis Short - FINAL FIX AUDIO+VIDEO</title>
 <style>
 :root{--bg:#0f1220;--card:#1b1e2e;--tx:#eef;--bd:#2d3250;--ac:#6c4cff}
 body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.5 system-ui,sans-serif}
-.wrap{max-width:1000px;margin:0 auto;padding:16px;display:grid;gap:16px;grid-template-columns:1fr}@media(min-width:800px){.wrap{grid-template-columns:1fr 340px}}
+.wrap{max-width:1080px;margin:0 auto;padding:16px;display:grid;gap:16px;grid-template-columns:1fr}@media(min-width:850px){.wrap{grid-template-columns:1fr 340px}}
 .card{background:var(--card);border:1px solid var(--bd);border-radius:16px;padding:16px}
-button{flex:1;padding:12px;border:0;border-radius:12px;background:var(--ac);color:#fff;font-weight:700;cursor:pointer}button.g{background:transparent;border:1px solid var(--bd);color:var(--tx)}
-button:disabled{opacity:.5}.row{display:flex;gap:8px;margin-top:12px}
-canvas{width:100%;max-width:320px;aspect-ratio:9/16;display:block;margin:auto;border-radius:14px;background:#000}
+button{flex:1;padding:12px;border:0;border-radius:12px;background:var(--ac);color:#fff;font-weight:700;cursor:pointer}button.g{background:transparent;border:1px solid var(--bd)}
+.row{display:flex;gap:8px;margin-top:12px}
+canvas,video{width:100%;max-width:320px;aspect-ratio:9/16;display:block;margin:auto;border-radius:14px;background:#000}
 label{font-weight:600;margin:12px 0 4px;font-size:13px;display:block}textarea,input,select{width:100%;padding:10px;border-radius:10px;border:1px solid var(--bd);background:#12141f;color:#fff;font:inherit}
-#st{text-align:center;font-weight:700;margin-top:10px;color:#8bf}
+#st{text-align:center;font-weight:700;margin-top:10px;color:#8bf;min-height:22px}
+.tip{font-size:12px;color:#9ab;background:#12141f;padding:8px;border-radius:8px;margin-top:10px}
 </style>
 </head><body>
 <div class="wrap">
 <div class="card">
-<h2 style="margin:0 0 6px">Generator Kuis - FIX GITHUB</h2>
-<div style="font-size:12px;color:#9ab;margin-bottom:10px">Cara pakai di GitHub Pages: Klik Rekam + Suara > Pilih tab <b>grafer-ctrl.github.io/aud/</b> > Aktifkan <b>Share tab audio</b> (toggle biru) > Share</div>
+<h2 style="margin:0">Kuis Short - FINAL</h2>
+<div class="tip">GitHub Pages: Klik Rekam + Suara > Pilih tab <b>aud/</b> ini > WAJIB aktifkan <b>Share tab audio</b> > Share. Hasil akan muncul preview di kanan, tidak blank lagi.</div>
 <label>Pertanyaan</label><textarea id="q" rows="2">Apa hukuman koruptor yang paling pantas?</textarea>
-<label>Pilihan jawaban (1 baris 1 jawaban)</label><textarea id="o" rows="7">Dieliminasi dari bumi
+<label>Pilihan</label><textarea id="o" rows="7">Dieliminasi dari bumi
 Jangan diakhiri hidupnya, cukup disakiti hidupnya dalam kotak 1x1 meter
 Rampas aset, dijadikan nasib seperti pemulung
 Perampasan aset, dikasih rumah di kolong jembatan
@@ -28,15 +29,20 @@ Lebih baik diam karena diam itu emas
 Salah semua, makanya saya tidak menjawab</textarea>
 <label>Akhir</label><textarea id="e" rows="2">Tulis pilihanmu di kertas, lalu upload di kolom komentar!</textarea>
 <label>Suara</label><select id="v"></select>
-<label>Durasi per slide (detik)</label><input id="d" type="number" min="1" max="8" value="3">
+<label>Durasi per slide</label><input id="d" type="number" min="1" max="8" value="3">
 <div class="row"><button id="play">▶ Preview</button><button id="rec">⏺ Rekam + Suara</button></div>
 <button id="stop" class="g" style="width:100%;margin-top:8px">■ Stop</button>
-<div id="st">Siap</div>
+<div id="st">Siap - canvas harusnya sudah muncul</div>
 </div>
-<div class="card"><canvas id="c" width="720" height="1280"></canvas></div>
+<div class="card">
+<canvas id="c" width="720" height="1280"></canvas>
+<div style="margin-top:12px;text-align:center;font-size:12px;color:#9ab">Hasil Rekaman (preview):</div>
+<video id="prev" controls playsinline style="display:none;margin-top:8px"></video>
+<a id="dl" style="display:none;margin-top:10px;text-align:center;color:#8bf;font-weight:700" download>⬇ Download .webm (Buka di Chrome / VLC)</a>
+</div>
 </div>
 <script>
-const $=id=>document.getElementById(id), cv=$('c'), x=cv.getContext('2d'), W=720,H=1280;
+const $=id=>document.getElementById(id), cv=$('c'), x=cv.getContext('2d'), W=720,H=1280, prev=$('prev'), dl=$('dl');
 let slides=[],cur=0,t0=0,run=false,cancel=false,voices=[];
 const pal=[[270,60],[330,65],[200,70],[20,75],[150,55]];
 
@@ -74,31 +80,41 @@ function draw(){
   }
   x.globalAlpha=1; requestAnimationFrame(draw);
 }
-function rr(a,b,w,h,r){x.beginPath();x.moveTo(a+r,b);x.arcTo(a+w,b,a+w,b+h,r);x.arcTo(a+w,b+h,a,b+h,r);x.arcTo(a,b+h,a,b,r);x.arcTo(a,b,a+w,b,r);x.closePath();}
 function speak(t){return new Promise(res=>{const u=new SpeechSynthesisUtterance(t);u.lang='id-ID';u.rate=1.0;const v=voices[$('v').value];if(v){u.voice=v;u.lang=v.lang}u.onend=u.onerror=()=>res();speechSynthesis.speak(u);});}
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 
 async function play(withRec){
-  if(run)return; build(); run=true; cancel=false; $('play').disabled=$('rec').disabled=true;
-  let mr, chunks=[], tabStream=null;
+  if(run)return; build(); run=true; cancel=false; $('play').disabled=$('rec').disabled=true; prev.style.display='none'; dl.style.display='none';
+  let mr, chunks=[], tabStream=null, canvasStream=null;
   if(withRec){
     try{
-      $('st').textContent='Silakan pilih tab ini + aktifkan Share tab audio...';
-      tabStream = await navigator.mediaDevices.getDisplayMedia({video:true, audio:{echoCancellation:false, noiseSuppression:false, suppressLocalAudioPlayback:false}});
-      if(tabStream.getAudioTracks().length===0){tabStream.getTracks().forEach(t=>t.stop()); throw new Error('Toggle Share tab audio belum diaktifkan!');}
-      const canvasStream = cv.captureStream(30);
-      const combined = new MediaStream([...canvasStream.getVideoTracks(), ...tabStream.getAudioTracks()]);
-      mr=new MediaRecorder(combined,{mimeType:'video/webm;codecs=vp8,opus'});
-      mr.ondataavailable=e=>e.data.size&&chunks.push(e.data);
-      mr.onstop=()=>{const b=new Blob(chunks,{type:'video/webm'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='kuis-ADA-SUARA.webm';a.click();tabStream.getTracks().forEach(t=>t.stop());};
-      mr.start(); $('st').textContent='● MEREKAM DENGAN SUARA TAB';
-    }catch(err){$('st').textContent='Batal/Gagal: '+err.message; $('play').disabled=$('rec').disabled=false; run=false; return;}
+      $('st').textContent='Pilih tab AUD + aktifkan Share tab audio...';
+      tabStream = await navigator.mediaDevices.getDisplayMedia({video:true, audio:true});
+      if(tabStream.getAudioTracks().length===0){tabStream.getTracks().forEach(t=>t.stop()); throw new Error('Kamu belum aktifkan toggle Share tab audio! Ulangi.');}
+      canvasStream = cv.captureStream(30);
+      // FIX: video dari canvas, audio dari tab
+      const combined = new MediaStream([canvasStream.getVideoTracks()[0], tabStream.getAudioTracks()[0]]);
+      const mime = MediaRecorder.isTypeSupported('video/webm;codecs=vp9,opus') ? 'video/webm;codecs=vp9,opus' : 'video/webm';
+      mr=new MediaRecorder(combined,{mimeType:mime});
+      mr.ondataavailable=e=>{if(e.data.size)chunks.push(e.data)};
+      mr.onstop=()=>{
+        const blob=new Blob(chunks,{type:'video/webm'});
+        const url=URL.createObjectURL(blob);
+        prev.src=url; prev.style.display='block'; prev.play();
+        dl.href=url; dl.download='kuis-ADA-SUARA.webm'; dl.style.display='block';
+        $('st').textContent='Selesai! Preview di kanan ada video+suara. Klik Download. Buka pakai Chrome / VLC, jangan Windows Media Player.';
+        tabStream.getTracks().forEach(t=>t.stop());
+        canvasStream.getTracks().forEach(t=>t.stop());
+      };
+      mr.start(100);
+      $('st').textContent='● MEREKAM - video canvas + audio tab';
+    }catch(err){$('st').textContent='Gagal: '+err.message; $('play').disabled=$('rec').disabled=false; run=false; return;}
   }
   const min=Math.max(1,+$('d').value)*1000;
   for(let i=0;i<slides.length&&!cancel;i++){cur=i; t0=performance.now(); $('st').textContent=(withRec?'● REC ':'')+'Slide '+(i+1)+'/'+slides.length; await Promise.all([speak(slides[i].s), sleep(min)]); await sleep(200);}
-  if(mr&&mr.state!=='inactive')mr.stop(); run=false; $('play').disabled=$('rec').disabled=false; $('st').textContent='Selesai!';
+  if(mr&&mr.state!=='inactive')mr.stop(); run=false; $('play').disabled=$('rec').disabled=false;
 }
-function loadVoices(){voices=speechSynthesis.getVoices();const sel=$('v');sel.innerHTML='';let idVoices=voices.filter(v=>v.lang.toLowerCase().includes('id'));let list=idVoices.length?idVoices:voices;list.forEach(v=>{const o=document.createElement('option');o.value=voices.indexOf(v);o.textContent=v.name+' ('+v.lang+')';sel.appendChild(o)});}
+function loadVoices(){voices=speechSynthesis.getVoices();const sel=$('v');sel.innerHTML='';let idV=voices.filter(v=>v.lang.toLowerCase().includes('id'));let list=idV.length?idV:voices;list.forEach(v=>{const o=document.createElement('option');o.value=voices.indexOf(v);o.textContent=v.name+' ('+v.lang+')';sel.appendChild(o)});}
 if(speechSynthesis){speechSynthesis.onvoiceschanged=loadVoices} loadVoices();
 $('play').onclick=()=>play(false); $('rec').onclick=()=>play(true); $('stop').onclick=()=>{cancel=true; speechSynthesis.cancel();};
 build(); t0=performance.now(); draw();
